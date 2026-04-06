@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fisherman Dashboard - FISHERMEN CATCH AND INCOME RECORDING SYSTEM FOR EDGAR DIALEL FISHING</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Phone App Interface Styles */
+        body.dashboard-bg {
+            background: linear-gradient(rgba(0, 50, 100, 0.4), rgba(0, 50, 100, 0.4)), url('background-image.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .phone-container {
+            width: 100%;
+            max-width: 430px;
+            min-height: 100vh;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            padding-bottom: 30px;
+        }
+
+        .container {
+            padding: 20px;
+            width: 100%;
+        }
+
+        header {
+            background: rgba(0, 86, 179, 0.8);
+            padding: 1.5rem 1rem;
+            margin-bottom: 0px;
+            border-radius: 0;
+            box-shadow: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        header h1 {
+            font-size: 1.2rem;
+            margin: 0;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .quick-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .quick-card:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .quick-card .icon {
+            font-size: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+
+        .quick-card .title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .stats-landscape {
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stat-box .value {
+            font-size: 1.2rem;
+        }
+
+        .stat-box .label {
+            font-size: 0.75rem;
+        }
+
+        .btn {
+            border-radius: 12px;
+        }
+
+        .card {
+            border-radius: 20px;
+            padding: 1.25rem;
+        }
+    </style>
+</head>
+
+<body class="dashboard-bg">
+    <div class="phone-container fade-in">
+        <header>
+            <h1 id="welcomeText">Hello, Fisherman</h1>
+            <nav><a href="#" onclick="App.logout()">Logout</a></nav>
+        </header>
+
+        <div class="container">
+            <!-- Hub Section -->
+            <div id="hubSection" class="section active">
+                <h2 style="margin-bottom: 20px; font-size: 1.5rem;">Dashboard Menu</h2>
+                <div class="card-grid">
+                    <div class="quick-card" onclick="navigateTo('income')">
+                        <span class="icon">💰</span>
+                        <span class="title">Income</span>
+                    </div>
+                    <div class="quick-card" onclick="navigateTo('updates')">
+                        <span class="icon">📈</span>
+                        <span class="title">Real Time Updates</span>
+                    </div>
+                    <div class="quick-card" onclick="navigateTo('report')">
+                        <span class="icon">📋</span>
+                        <span class="title">Sales Reports</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Income Section -->
+            <div id="incomeSection" class="section">
+                <button class="btn btn-secondary" onclick="navigateTo('hub')"
+                    style="margin-bottom: 15px; width: auto; padding: 8px 15px; font-size: 0.85rem; background: rgba(255,255,255,0.05);">⬅
+                    Back to Menu</button>
+                <div class="card" id="stats">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-direction: column; gap: 10px;">
+                        <h3 style="margin: 0;">Income Overview</h3>
+                        <div style="display: flex; gap: 5px; align-items: center; width: 100%;">
+                            <input type="date" id="fishDateFilter" onchange="updateUI()"
+                                style="padding: 5px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.1); color: inherit; font-size: 0.8rem; flex: 1;">
+                            <button class="btn btn-secondary"
+                                onclick="document.getElementById('fishDateFilter').value = ''; updateUI()"
+                                style="width: auto; padding: 5px 10px; font-size: 0.75rem;">Clear</button>
+                        </div>
+                    </div>
+                    <div class="stats-landscape">
+                        <div class="stat-box">
+                            <div class="value" id="totalGrossIncome">₱0</div>
+                            <div class="label">Gross</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="value" id="totalIncome">₱0</div>
+                            <div class="label" id="incomeLabel">My Share</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="value" id="totalWeight">0 kg</div>
+                            <div class="label">Weight</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="value" id="adminShare">₱0</div>
+                            <div class="label">Owner Share (2/3)</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="value" id="totalMarketFee">₱0</div>
+                            <div class="label">Maintenance</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="value" id="sharedExpenseShare">₱0</div>
+                            <div class="label">Cash Advance(Bale)</div>
+                        </div>
+                    </div>
+                    <div id="summaryDate"
+                        style="margin-top: 15px; font-size: 0.8rem; color: var(--text-muted); opacity: 0.8; text-align: center;">
+                        <!-- Populated by updateUI -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Updates Section -->
+            <div id="updatesSection" class="section">
+                <button class="btn btn-secondary" onclick="navigateTo('hub')"
+                    style="margin-bottom: 15px; width: auto; padding: 8px 15px; font-size: 0.85rem; background: rgba(255,255,255,0.05);">⬅
+                    Back to Menu</button>
+                <div class="card" id="prices" style="background: rgba(0, 86, 179, 0.1);">
+                    <h3>Market Prices</h3>
+                    <p id="priceList" style="color: var(--white); font-size: 1rem; line-height: 2;">
+                        Loading prices...
+                    </p>
+                </div>
+            </div>
+
+            <!-- Reports Section -->
+            <div id="reportSection" class="section">
+                <button class="btn btn-secondary" onclick="navigateTo('hub')"
+                    style="margin-bottom: 15px; width: auto; padding: 8px 15px; font-size: 0.85rem; background: rgba(255,255,255,0.05);">⬅
+                    Back to Menu</button>
+                <div class="card">
+                    <h3>Catch History</h3>
+                    <div class="table-container">
+                        <table id="catchTable" style="font-size: 0.85rem;">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Fish</th>
+                                    <th>Wt</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top: 15px;" class="no-print">
+                        <button class="btn btn-secondary" style="width: 100%; padding: 10px;"
+                            onclick="window.print()">Print Sales Report</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Expenses Section -->
+            <div id="expensesSection" class="section">
+                <button class="btn btn-secondary" onclick="navigateTo('hub')"
+                    style="margin-bottom: 15px; width: auto; padding: 8px 15px; font-size: 0.85rem; background: rgba(255,255,255,0.05);">⬅
+                    Back to Menu</button>
+                <div class="card">
+                    <h3>Cash Advance(Bale)</h3>
+                    <div
+                        style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; font-size: 0.9rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>Active:</span>
+                            <span id="shareActiveCount">0</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>Total Cash Advance:</span>
+                            <span id="shareTotalExpenses">₱0</span>
+                        </div>
+                        <div
+                            style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px; margin-top: 5px;">
+                            <span>My Total Bale:</span>
+                            <span id="shareTotalDeduction" style="color: #ff6b6b;">₱0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 15px;">
+                    <h3>Personal Cash Advance(Bale)</h3>
+                    <form id="personalExpenseForm" style="display: flex; flex-direction: column; gap: 10px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="font-size: 0.8rem;">Description</label>
+                            <input type="text" id="pExpenseDesc" required placeholder="Fuel, Ice..."
+                                style="padding: 10px; width: 100%; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.1); color: white;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="font-size: 0.8rem;">Amount (₱)</label>
+                            <input type="number" id="pExpenseAmount" required
+                                style="padding: 10px; width: 100%; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.1); color: white;">
+                        </div>
+                        <button type="submit" class="btn" style="padding: 12px;">Add Cash Advance(Bale)</button>
+                    </form>
+                    <div class="table-container" style="margin-top: 15px;">
+                        <table id="personalExpensesTable" style="font-size: 0.85rem;">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Desc</th>
+                                    <th>Amt</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+    <script>
+        // Auth Check
+        (async () => {
+            if (!App.currentUser || App.currentUser.role !== 'FISHERMAN') {
+                window.location.href = 'index.html';
+            } else {
+                const isOnline = await App.checkConnection();
+                if (!isOnline) {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.style.cssText = "background: #ff6b6b; color: white; padding: 15px; text-align: center; font-weight: bold; position: fixed; top: 0; left: 0; right: 0; z-index: 9999;";
+                    alertDiv.innerHTML = "⚠️ DATABASE OFFLINE: Please start your Node.js server (node server.js)!";
+                    document.body.prepend(alertDiv);
+                }
+                document.getElementById('welcomeText').innerText = `Hello, ${App.currentUser.username}`;
+                await updateUI();
+            }
+        })();
+
+        async function navigateTo(sectionId, elementId = null) {
+            await showSection(sectionId);
+
+            if (elementId) {
+                setTimeout(() => {
+                    const el = document.getElementById(elementId);
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+            }
+        }
+
+        async function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            const section = document.getElementById(id + 'Section');
+            if (section) section.classList.add('active');
+
+            if (['report', 'income', 'updates', 'expenses'].includes(id)) await updateUI();
+        }
+
+        document.getElementById('personalExpenseForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const desc = document.getElementById('pExpenseDesc').value;
+            const amount = document.getElementById('pExpenseAmount').value;
+
+            const result = await App.addOperationalExpense(desc, amount, 'Personal');
+            if (result.success) {
+                alert('Cash Advance(Bale) added!');
+                e.target.reset();
+                await updateUI();
+            }
+        });
+
+        async function updateUI() {
+            const filterDate = document.getElementById('fishDateFilter').value;
+            
+            const reportsTemp = await App.getFishermanReports();
+            const reports = reportsTemp.filter(r => {
+                if (!filterDate) return true;
+                return new Date(r.recordedAt).toISOString().split('T')[0] === filterDate;
+            });
+
+            const stats = await App.getSummaryStats(App.currentUser.username, filterDate);
+            document.getElementById('totalGrossIncome').innerText = `₱${stats.totalGross}`;
+            document.getElementById('totalMarketFee').innerText = `₱${stats.marketFee}`;
+            document.getElementById('sharedExpenseShare').innerText = `₱${stats.sharedDeduction}`;
+            document.getElementById('totalIncome').innerText = `₱${stats.totalRevenue}`;
+            document.getElementById('totalWeight').innerText = `${stats.totalWeight} kg`;
+            // Owner Share
+            document.getElementById('adminShare').innerText = `₱${stats.adminShareTersia}`;
+
+            // Adjust label for clarity
+            document.getElementById('totalIncome').nextElementSibling.innerText = 'Your Share (1/3)';
+
+            // Update summary date
+            const dateDisplay = document.getElementById('summaryDate');
+            if (dateDisplay) {
+                const displayDate = filterDate ? new Date(filterDate) : new Date();
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                dateDisplay.innerText = `As of ${displayDate.toLocaleDateString('en-US', options)}`;
+            }
+
+            // Update Shared Expense Detail Info
+            const sharedData = await App.getSharedExpenseData(App.currentUser.username);
+            if (document.getElementById('shareActiveCount')) {
+                document.getElementById('shareActiveCount').innerText = sharedData.activeCount;
+                document.getElementById('shareTotalExpenses').innerText = `₱${sharedData.totalMarketExpenses.toLocaleString()}`;
+                document.getElementById('shareTotalDeduction').innerText = `₱${parseFloat(sharedData.fishermanShare).toLocaleString()}`;
+            }
+
+            // Update real-time prices
+            const settings = await App.getSettings();
+            const priceList = document.getElementById('priceList');
+            const fishTypes = Object.keys(settings.prices);
+
+            priceList.innerHTML = `<strong>Market is active.</strong><br>` +
+                fishTypes.map(fish => `${fish}: ₱${settings.prices[fish]}/kg`).join(' | ');
+
+            // Update Table
+            const tbody = document.querySelector('#catchTable tbody');
+            tbody.innerHTML = reports.slice().reverse().map(r => `
+                <tr>
+                    <td>${new Date(r.recordedAt).toLocaleString()}</td>
+                    <td>${r.fishType}</td>
+                    <td>${r.weight} kg</td>
+                    <td>₱${r.totalValue.toLocaleString()}</td>
+                </tr>
+            `).join('');
+
+            const totalSales = reports.reduce((sum, r) => sum + (parseFloat(r.totalValue) || 0), 0);
+            document.getElementById('totalSalesSum') && (document.getElementById('totalSalesSum').innerText = `₱${totalSales.toLocaleString()}`);
+
+            // Update Personal Expenses
+            const personalExpensesTemp = await App.getOperationalExpenses(App.currentUser.username);
+            const personalExpenses = personalExpensesTemp.filter(e => {
+                if (!filterDate) return true;
+                return new Date(e.recordedAt).toISOString().split('T')[0] === filterDate;
+            });
+            
+            const pExpTbody = document.querySelector('#personalExpensesTable tbody');
+            pExpTbody.innerHTML = personalExpenses.slice().reverse().map(e => `
+                <tr>
+                    <td>${new Date(e.recordedAt).toLocaleDateString()}</td>
+                    <td>${e.description}</td>
+                    <td>₱${e.amount.toLocaleString()}</td>
+                </tr>
+            `).join('');
+        }
+    </script>
+</body>
+
+</html>
