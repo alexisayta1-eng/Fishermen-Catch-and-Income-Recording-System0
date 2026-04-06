@@ -15,12 +15,19 @@ const App = {
     },
 
     async checkConnection() {
-        if (!_supabase) return false;
+        if (!_supabase) {
+            console.error("Supabase client not initialized!");
+            return false;
+        }
         try {
-            // Simple query to check connection
             const { data, error } = await _supabase.from('settings').select('id').limit(1);
-            return !error;
+            if (error) {
+                console.error("Supabase connection error:", error.message);
+                return false;
+            }
+            return true;
         } catch (e) {
+            console.error("Supabase connection failure:", e);
             return false;
         }
     },
@@ -393,6 +400,35 @@ const App = {
         } catch (error) {
             return false;
         }
+    },
+
+    // Real-time synchronization
+    subscribeToChanges(callback) {
+        if (!_supabase) return;
+
+        _supabase
+            .channel('fcirs-changes')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'catches' },
+                () => callback()
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'operational_expenses' },
+                () => callback()
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'settings' },
+                () => callback()
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'users' },
+                () => callback()
+            )
+            .subscribe();
     },
 
     resetSystem() {
